@@ -1,76 +1,104 @@
 # Architecture Overview
 
-Automation agent that uses the `browser-use` toolkit to collect job listings.
-The repository intentionally keeps the surface area small so the runtime
-configuration stays easy to audit.
+The MVP now ships a full-stack JobApply agent: a FastAPI backend orchestrating job
+scraping, ranking, and application preparation, plus a Next.js dashboard for human-in-
+the-loop review.
 
 ---
 
 ## System Components
 
-- **Command-line entry (`main.py`):** Defines the natural-language task, configures
-  the `browser_use.Agent`, and executes the asynchronous run loop.
-- **Tools (`browser_use.Tools`):** Provides scraping, extraction, and file-writing
-  actions that the agent can call while browsing.
-- **Language model (`ChatOpenAI`):** Orchestrates reasoning over the browsing
-  session. The model name can be overridden via environment variables.
-- **Environment configuration:** `.env` file supplies credentials (e.g., OpenAI
-  key) that `browser-use` and `ChatOpenAI` read at startup.
+- **FastAPI app (`app/api/main.py`)** — Exposes `/jobs/fetch`, `/jobs/match`, and
+  `/jobs/apply` endpoints and boots the APScheduler background fetcher.
+- **Configuration (`app/config.py`)** — Loads environment variables (see `mvp.env`) and
+  ensures storage/log directories exist.
+- **Persistence (`app/database.py`, `app/models.py`, `app/repositories.py`)** — SQLModel
+  models for sources, postings, applications, and resume index text. Repositories handle
+  dedupe and CRUD flows.
+- **Job discovery services (`app/services/job_discovery.py` + fetchers)** — Async
+  fetchers for LinkedIn, Indeed, Glassdoor, and company feeds using `httpx` + `bs4`.
+- **Matching engine (`app/services/matcher.py`)** — Generates TF-IDF vectors from the
+  candidate corpus (resume PDF + profile JSON) and scores postings.
+- **Application workflow (`app/services/application.py`)** — Produces tailored resume
+  highlights/cover letters (OpenAI-backed when available) and stores results.
+- **Scheduler (`app/services/scheduler.py`)** — APScheduler interval job that refreshes
+  listings using configured search terms.
+- **Dashboard (`dashboard/`)** — Next.js 14 app using SWR to show ranked jobs and
+  trigger application packages.
 
 ---
 
 ## Data Flow
 
 ```text
-Developer invokes `python main.py`
+User hits REST endpoint or scheduler triggers fetch
         ↓
-Environment variables load via `dotenv`
+Discovery service gathers postings from each fetcher (LinkedIn/Indeed/Glassdoor/feeds)
         ↓
-`Agent` receives the multi-step job-scraping task prompt
+SQLModel repository deduplicates and persists job postings
         ↓
-Agent drives a headless browser session using `browser-use` actions
+Matcher computes similarity scores vs. resume/profile corpus
         ↓
-Extracted data is saved to `job_postings.csv` through the provided file tool
+Application service generates resume + cover letter files and logs status
+        ↓
+Dashboard/API consumers read from the database and storage directories
 ```
 
 ---
 
 ## Key Decisions
 
-### Why `browser-use`?
-**Problem:** Need reliable, scriptable browsing for job-search automation.
-**Solution:** Adopted the `browser-use` toolkit because it exposes high-level
-agent abstractions and built-in extract/write actions.
-**Trade-off:** Requires alignment with the toolkit's async APIs and dependency
-on the provider's browser automation reliability.
+### FastAPI + SQLModel backend
+- **Rationale:** We needed persistent state, background scheduling, and a clean REST API
+  for future automations.
+- **Trade-offs:** Increased complexity vs. the original single-script approach; requires
+  dependency management for HTTP scraping and ML libraries.
 
-### Why a single-module layout?
-**Problem:** Keep experimentation nimble while the workflow is evolving.
-**Solution:** Place orchestration logic in `main.py` and rely on rich prompt
-engineering rather than many helper modules.
-**Trade-off:** Fewer seams for unit tests today; expand into packages when we
-add persistent state or multiple tasks.
+### TF-IDF matcher with OpenAI fallback
+- **Rationale:** Provides deterministic, offline-friendly scoring while still allowing
+  richer AI tailoring when an OpenAI key exists.
+- **Trade-offs:** TF-IDF may miss nuanced semantic matches; future work can swap in
+  embeddings or vector databases.
+
+### Next.js dashboard
+- **Rationale:** Gives stakeholders a simple UI to browse matches and manually trigger
+  applications, enabling a human-in-the-loop workflow for early releases.
+- **Trade-offs:** Requires Node.js toolchain; remains minimal (SWR + client components).
 
 ---
 
 ## Module Structure
 
 ```text
-.
-├── main.py              # Entry point configuring and running the agent
-├── .ai/                 # Project documentation for humans and AI assistants
-└── .github/             # GitHub-specific guidance
+app/
+  api/main.py             # FastAPI app & scheduler startup
+  api/routes/jobs.py      # REST endpoints for job fetch/match/apply
+  config.py               # Pydantic settings + env parsing
+  database.py             # SQLModel engine + session helpers
+  logging_config.py       # Console/file log configuration
+  models.py               # SQLModel ORM tables
+  repositories.py         # Persistence helpers and dedupe logic
+  schemas.py              # Pydantic request/response models
+  services/
+    application.py        # Tailored resume/cover-letter workflow
+    generation.py         # OpenAI-backed text generation helpers
+    job_discovery.py      # Aggregates fetchers and persists postings
+    matcher.py            # TF-IDF matching against profile corpus
+    scheduler.py          # APScheduler interval job
+    fetchers/             # Source-specific scraping modules
+  utils/
+    profile.py            # Load/flatten profile JSON
+    resume.py             # Extract text from PDF resume
+main.py                   # Uvicorn entry point
 ```
 
 ---
 
 ## 🔧 For AI Agents
 
-1. Keep this file up to date when you split `main.py` into submodules or add
-   persistent storage/output layers.
-2. Note any new external integrations (APIs, message queues, etc.) here so
-   future contributors can trace dependencies quickly.
-3. Record the reasoning behind prompt or tool changes that materially affect
-   how the agent navigates.
+1. Update this document when adding new services (e.g., automated form submission).
+2. Log new job sources or data stores so future maintainers can trace dependencies.
+3. Record significant prompt/template updates in the relevant service module and
+   mention them in commit messages/PR descriptions.
 
 **Last Updated:** 2025-02-15

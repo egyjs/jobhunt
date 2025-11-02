@@ -1,34 +1,22 @@
-from browser_use import Tools,Agent, ChatOpenAI, ActionResult, Browser
+from __future__ import annotations
 
-from dotenv import load_dotenv
-import asyncio
-tools = Tools()
+import uvicorn
 
-load_dotenv()
-
+from app.config import get_settings
+from app.logging_config import configure_logging
 
 
-async def main():
-    llm = ChatOpenAI(model="gpt-4.1-mini")
-    # llm = ChatOllama(model="llama3.2:1b")
-    task = """
-    1. Go to https://indeed.com
-    2. find 5 relevant job postings for "Laravel developer" in "Egypt"
-    3. For each job posting, use extract action to get the job title, company name, location
-    4. Summarize the job description in one sentence
-    5. use screenshot action to screenshot the job posting page
-    6. use write_file action to store the extracted information in a CSV file named "job_postings.csv" with columns: Job Title, Company Name, Location, Summary, Screenshot Path
-
-    note: Use as few steps as possible, any executed code must be in javascript 
-    """
-    agent = Agent(
-        task=task,
-        llm=llm,
+def run() -> None:
+    configure_logging()
+    settings = get_settings()
+    uvicorn.run(
+        "app.api.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False,
+        log_level=settings.log_level.lower(),
     )
-    await agent.run()
-
-
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run()

@@ -11,19 +11,18 @@ _No active tickets._
 
 ---
 
-## 📋 To Do (Ready for Development)
-
-_No scheduled work. Add a ticket here when a stakeholder prioritizes a task._
-
----
-
-## 🗂️ Backlog (Not Yet Prioritized)
-
-_No backlog items recorded._
-
----
-
 ## ✅ Done
+
+### TICKET-001: Build autonomous JobApply MVP
+**Status:** Done
+**Completed:** 2025-02-15
+**Type:** Epic
+
+**Summary:** Replaced the prototype script with a FastAPI + SQLModel backend, async
+fetchers for LinkedIn/Indeed/Glassdoor/company feeds, TF-IDF matcher, AI-assisted
+application workflow, APScheduler automation, and a Next.js dashboard. Added sample
+profile/resume assets and comprehensive documentation (`mvp.env`, README, architecture
+update).
 
 ### TICKET-000: Initialize automation scaffold
 **Status:** Done
@@ -33,6 +32,16 @@ _No backlog items recorded._
 **Notes:** Added the initial `browser-use` powered script (`main.py`) and documentation scaffolding.
 
 ---
+
+## 📋 To Do (Ready for Development)
+
+_No scheduled work. Add a ticket here when a stakeholder prioritizes a task._
+
+---
+
+## 🗂️ Backlog (Not Yet Prioritized)
+
+_No backlog items recorded._
 
 ## 🤖 Usage Guide
 

@@ -11,6 +11,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!dashboard/app/lib/
 lib64/
 parts/
 sdist/
@@ -58,12 +59,21 @@ htmlcov/
 data/
 screenshots/
 *.csv
-*.json
+storage/*
+!storage/.gitkeep
+!storage/applications/
+storage/applications/*
+!storage/applications/.gitkeep
 !.env.example
 
 # Logs
 *.log
-logs/
+logs/*
+!logs/.gitkeep
+!dashboard/package.json
+!dashboard/tsconfig.json
+!dashboard/app/lib/api.ts
+!profiles/profile.json
 
 # Jupyter Notebook
 .ipynb_checkpoints

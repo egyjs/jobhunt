@@ -1,55 +1,55 @@
 # Architecture Overview
 
-Automation agent that uses the `browser-use` toolkit to collect job listings.
-The repository intentionally keeps the surface area small so the runtime
-configuration stays easy to audit.
+The JobApply AI agent now runs as a FastAPI service with supporting worker utilities, consolidating job discovery, matching, and application prep.
 
 ---
 
 ## System Components
 
-- **Command-line entry (`main.py`):** Defines the natural-language task, configures
-  the `browser_use.Agent`, and executes the asynchronous run loop.
-- **Tools (`browser_use.Tools`):** Provides scraping, extraction, and file-writing
-  actions that the agent can call while browsing.
-- **Language model (`ChatOpenAI`):** Orchestrates reasoning over the browsing
-  session. The model name can be overridden via environment variables.
-- **Environment configuration:** `.env` file supplies credentials (e.g., OpenAI
-  key) that `browser-use` and `ChatOpenAI` read at startup.
+- **FastAPI entry (`app/main.py`):** exposes REST endpoints and serves the dashboard UI.
+- **CLI (`main.py`):** wraps server start, one-off fetches, and match inspection.
+- **Configuration (`app/config.py`):** loads environment settings from `.env`/`mvp.env` and normalizes search parameters.
+- **Database (`app/database.py`, `app/models.py`):** SQLite via SQLAlchemy storing jobs, tags, and application records.
+- **Service registry (`app/services/registry.py`):** wires shared services (job sources, embeddings, AI, tagging, profile loader).
+- **Job sources (`app/services/job_sources/`):** async scrapers for Indeed RSS, LinkedIn guest API, Glassdoor search, and configurable company feeds.
+- **Job fetcher (`app/services/job_fetcher.py`):** orchestrates provider calls, deduplicates postings, generates summaries, embeddings, and tags before persisting.
+- **Matching engine (`app/services/matching.py`):** encodes resume/profile text, ranks jobs via cosine similarity + recency bonus.
+- **Application workflow (`app/services/application_service.py`):** generates tailored resume/cover-letter artifacts and records application status.
+- **AI helpers (`app/services/ai.py`):** OpenAI Responses API wrapper with fallback templates.
+- **Profile loader (`app/services/profile.py`):** reads resume PDF + JSON profile for downstream services.
+- **Scheduler (`app/scheduler.py`):** APScheduler job to periodically refresh listings.
+- **Dashboard UI (`app/ui/*`):** Jinja template + vanilla JS for monitoring and manual actions.
 
 ---
 
 ## Data Flow
 
 ```text
-Developer invokes `python main.py`
-        ↓
-Environment variables load via `dotenv`
-        ↓
-`Agent` receives the multi-step job-scraping task prompt
-        ↓
-Agent drives a headless browser session using `browser-use` actions
-        ↓
-Extracted data is saved to `job_postings.csv` through the provided file tool
+python main.py serve → uvicorn loads app/main.py → FastAPI startup → ServiceRegistry + scheduler
+POST /api/jobs/fetch → JobFetcher gathers providers → embeddings + summaries → SQLAlchemy persistence
+GET /api/jobs/match → MatchingService ranks stored jobs → returns JSON for dashboard
+POST /api/jobs/apply → ApplicationService tailors resume/cover letter → files saved in data/applications
 ```
 
 ---
 
 ## Key Decisions
 
-### Why `browser-use`?
-**Problem:** Need reliable, scriptable browsing for job-search automation.
-**Solution:** Adopted the `browser-use` toolkit because it exposes high-level
-agent abstractions and built-in extract/write actions.
-**Trade-off:** Requires alignment with the toolkit's async APIs and dependency
-on the provider's browser automation reliability.
+### FastAPI Service
+**Why:** Need REST + dashboard endpoints while keeping automation auditable.  
+**Trade-offs:** Requires managing async fetchers and scheduler lifecycles explicitly.
 
-### Why a single-module layout?
-**Problem:** Keep experimentation nimble while the workflow is evolving.
-**Solution:** Place orchestration logic in `main.py` and rely on rich prompt
-engineering rather than many helper modules.
-**Trade-off:** Fewer seams for unit tests today; expand into packages when we
-add persistent state or multiple tasks.
+### Sentence-Transformer Embeddings
+**Why:** Local embeddings avoid per-call LLM cost for matching.  
+**Trade-offs:** Larger dependencies and cold-start download time.
+
+### OpenAI for Tailoring
+**Why:** Produces high-quality customized materials.  
+**Fallback:** Deterministic templates when API key absent ensure workflow continuity.
+
+### Pluggable Job Sources
+**Why:** Each board has bespoke HTML/feeds; modular providers simplify future adjustments.  
+**Trade-offs:** HTML selectors may break with upstream changes; logging + graceful failure mitigate outages.
 
 ---
 
@@ -57,20 +57,48 @@ add persistent state or multiple tasks.
 
 ```text
 .
-├── main.py              # Entry point configuring and running the agent
-├── .ai/                 # Project documentation for humans and AI assistants
-└── .github/             # GitHub-specific guidance
+├── main.py                 # CLI entry
+├── app/
+│   ├── __init__.py         # create_app + scheduler wiring
+│   ├── main.py             # FastAPI app instance
+│   ├── api/routes.py       # REST endpoints
+│   ├── config.py           # settings loader
+│   ├── database.py         # SQLAlchemy engine/session helpers
+│   ├── models.py           # ORM models
+│   ├── schemas.py          # Pydantic response/request models
+│   ├── services/
+│   │   ├── registry.py     # service container
+│   │   ├── ai.py           # OpenAI helpers
+│   │   ├── embeddings.py   # sentence-transformer wrapper
+│   │   ├── job_fetcher.py  # job ingestion orchestration
+│   │   ├── matching.py     # similarity ranking
+│   │   ├── application_service.py
+│   │   ├── profile.py
+│   │   ├── tagging.py
+│   │   └── job_sources/
+│   │       ├── base.py
+│   │       ├── indeed.py
+│   │       ├── linkedin.py
+│   │       ├── glassdoor.py
+│   │       └── company.py
+│   ├── scheduler.py
+│   ├── ui/
+│   │   ├── router.py
+│   │   ├── templates/dashboard.html
+│   │   └── static/{dashboard.js,styles.css}
+│   └── utils/text.py
+├── data/                   # profile.json, applications/, resume placeholder
+├── mvp.env                 # sample environment config
+└── setup.sh                # install helper
 ```
 
 ---
 
-## 🔧 For AI Agents
+## 🔧 Notes for AI Agents
 
-1. Keep this file up to date when you split `main.py` into submodules or add
-   persistent storage/output layers.
-2. Note any new external integrations (APIs, message queues, etc.) here so
-   future contributors can trace dependencies quickly.
-3. Record the reasoning behind prompt or tool changes that materially affect
-   how the agent navigates.
+1. Update job source modules or tagging vocab when adjusting discovery targets.
+2. Keep OpenAI prompt changes documented in commit messages and feature specs.
+3. When adding new persistence tables, update `models.py`, migrations (if introduced), and document them here.
+4. Dashboard assets live under `app/ui`; coordinate JS & API contract changes.
 
-**Last Updated:** 2025-02-15
+**Last Updated:** 2025-02-16

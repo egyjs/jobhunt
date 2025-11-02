@@ -56,9 +56,17 @@ htmlcov/
 
 # Project-specific data (local storage)
 data/
+!data/
+data/*
+!data/profile.json
+!data/applications/
+data/applications/*
+!data/applications/.gitkeep
 screenshots/
 *.csv
 *.json
+!data/profile.json
+!data/applications/.gitkeep
 !.env.example
 
 # Logs

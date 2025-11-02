@@ -50,6 +50,14 @@ Keep this lean and update it when practices change.
 
 ---
 
+## Runtime Workflow
+
+- Start the service with `python main.py serve` and test REST endpoints via the dashboard or curl.
+- For one-off ingestion, run `python main.py fetch` which also logs top matches.
+- Keep SQLite-compatible migrations in sync if future tooling is introduced.
+
+---
+
 ## Documentation Requirements
 
 - Update `/.ai/ARCHITECTURE.md` whenever you add modules or tools.
@@ -76,4 +84,4 @@ Keep this lean and update it when practices change.
 3. If you invent a new convention (naming, folder layout, prompt template), add
    it here so the next contributor understands the decision.
 
-**Last Updated:** 2025-02-15
+**Last Updated:** 2025-02-16

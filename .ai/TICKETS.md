@@ -7,7 +7,17 @@ Only add or update tickets when a human stakeholder requests new work.
 
 ## 🔥 In Progress
 
-_No active tickets._
+### TICKET-001: Ship autonomous job-application MVP
+**Status:** In Progress
+**Type:** Feature
+**Spec:** [.ai/features/2025-02-16_feature_jobapply_mvp.md](../.ai/features/2025-02-16_feature_jobapply_mvp.md)
+
+**Acceptance Criteria:**
+- Implements FastAPI service with `/jobs/fetch`, `/jobs/match`, `/jobs/apply`.
+- Schedules daily discovery job and persists postings + applications.
+- Generates tailored resume and cover letter assets per application.
+- Updates docs and setup instructions for the MVP workflow.
+
 
 ---
 
@@ -44,4 +54,4 @@ _No backlog items recorded._
 4. Move completed tickets to the **Done** section with the actual completion
    date and a short summary of the delivered change.
 
-**Last Updated:** 2025-02-15
+**Last Updated:** 2025-02-16

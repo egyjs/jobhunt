@@ -1,0 +1,35 @@
+{
+  "name": "Alex Developer",
+  "title": "Senior Laravel Engineer",
+  "location": "Cairo, Egypt",
+  "email": "alex.developer@example.com",
+  "summary": "Seasoned Laravel/PHP engineer with 8+ years leading remote web platform deliveries across fintech and SaaS.",
+  "skills": [
+    "Laravel",
+    "PHP",
+    "REST APIs",
+    "MySQL",
+    "AWS",
+    "Leadership",
+    "Agile Coaching",
+    "Node.js"
+  ],
+  "experience": [
+    {
+      "company": "SaaSly",
+      "role": "Lead Laravel Developer",
+      "achievements": [
+        "Scaled subscription billing engine handling 1M+ monthly invoices",
+        "Introduced CI/CD and test automation, reducing release defects by 35%"
+      ]
+    },
+    {
+      "company": "FintechFlow",
+      "role": "Senior Backend Engineer",
+      "achievements": [
+        "Delivered PSD2-compliant payment integrations",
+        "Mentored a team of six engineers"
+      ]
+    }
+  ]
+}

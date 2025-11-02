@@ -1,59 +1,63 @@
-# Job Hunt Agent - MVP
+# JobApply AI Agent MVP
 
-Automated job search agent using browser-use to scrape Indeed for Laravel developer positions.
+Autonomous agent that discovers, ranks, and prepares job applications across LinkedIn, Indeed, Glassdoor, and company career feeds. The MVP exposes a FastAPI backend with a lightweight dashboard for manual review or one-click application prep.
 
-## Quick Start
+## Features
+- 🔍 **Job Discovery:** pluggable scrapers for LinkedIn, Indeed RSS, Glassdoor, and custom company feeds with deduplication + keyword tagging.
+- 🧠 **Matching Engine:** sentence-transformer embeddings to rank postings against your resume + LinkedIn profile.
+- ✍️ **AI Tailoring:** OpenAI-powered resume bullet rewrites, cover letters, and job summaries with deterministic fallbacks.
+- 📦 **Application Kit:** generates per-job resume & cover letter files and tracks submission status in SQLite.
+- 📊 **Dashboard:** filterable UI to trigger fetch, review matches, and launch tailored applications.
+- ⏰ **Scheduler:** APScheduler job that refreshes listings on an interval.
 
-### Prerequisites
-- Python 3.11+
-- OpenAI API Key
+## Getting Started
 
-### Installation
-
+### 1. Install dependencies
 ```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Install Playwright browsers
-playwright install chromium
-
-# 3. Set up environment variables
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+./setup.sh
 ```
 
-### Run
-
+### 2. Configure environment
+Copy the sample configuration and update it with your secrets + preferences:
 ```bash
-python main.py
+cp mvp.env .env
+```
+Key settings:
+- `OPENAI_API_KEY` – optional; enables AI tailoring (fallback templates used if absent).
+- `JOB_TITLES`, `JOB_LOCATIONS`, `JOB_TYPES` – search permutations.
+- `COMPANY_FEEDS` – RSS/Atom feeds for company career pages.
+- `PROFILE_JSON_PATH`, `RESUME_PDF_PATH` – candidate profile sources.
+
+Place your resume PDF and profile JSON at the configured paths (defaults under `data/`).
+
+### 3. Launch the API & dashboard
+```bash
+python main.py serve --host 0.0.0.0 --port 8000
+```
+Open [http://localhost:8000](http://localhost:8000) to access the dashboard.
+
+### 4. CLI utilities
+```bash
+# Fetch jobs once and log match scores
+python main.py fetch --limit 50
+
+# Display ranked matches in the console
+python main.py match --limit 25
 ```
 
-The agent will:
-1. Navigate to Indeed.com
-2. Search for "Laravel developer" jobs in "Egypt"
-3. Extract 5 job postings (title, company, location, summary)
-4. Save results to `job_postings.csv`
-5. Take screenshots of each job posting
+## REST API
+- `POST /api/jobs/fetch` → trigger discovery; returns counts per source.
+- `GET /api/jobs/match` → list ranked jobs (`limit` query param supported).
+- `POST /api/jobs/apply` → generate tailored resume + cover letter for the given `job_id`.
 
-## Output
+## Data Storage
+- SQLite database at `data/jobapply.db` (configurable via `DATABASE_URL`).
+- Generated artifacts saved to `data/applications/` with timestamped filenames.
 
-- **CSV File**: `job_postings.csv` with columns:
-  - Job Title
-  - Company Name
-  - Location
-  - Summary
-  - Screenshot Path
+## Development Notes
+- The first run downloads the `sentence-transformers/all-MiniLM-L6-v2` model.
+- Scraping endpoints rely on public pages; selectors may need adjustment if upstream markup shifts.
+- When OpenAI credentials are missing, fallback templates ensure the workflow still produces artifacts.
 
-## Configuration
-
-Edit the `task` variable in `main.py` to customize:
-- Job search query
-- Location
-- Number of jobs to fetch
-- Output format
-
-## Troubleshooting
-
-- **Browser not found**: Run `playwright install chromium`
-- **API errors**: Check your OPENAI_API_KEY in `.env`
-- **Rate limiting**: Add delays between requests in the task prompt
+## License
+MIT

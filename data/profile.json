@@ -1,0 +1,15 @@
+{
+  "name": "Alex Developer",
+  "summary": "Senior Laravel developer with 8+ years building scalable SaaS platforms.",
+  "skills": ["PHP", "Laravel", "MySQL", "AWS", "React"],
+  "experience": [
+    {
+      "company": "Acme Corp",
+      "title": "Senior Backend Engineer",
+      "achievements": [
+        "Designed multi-tenant architecture for 50k daily active users",
+        "Reduced API latency by 35% via caching and async queues"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobApply AI Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>JobApply AI Agent</h1>
+      <div class="controls">
+        <button id="fetch-btn">Fetch Jobs</button>
+        <button id="match-btn">Refresh Matches</button>
+      </div>
+    </header>
+    <section id="status">
+      <h2>Status</h2>
+      <pre id="status-log">Ready.</pre>
+    </section>
+    <section>
+      <h2>Matched Jobs</h2>
+      <div class="filters">
+        <label>
+          Source
+          <input type="text" id="filter-source" placeholder="linkedin" />
+        </label>
+        <label>
+          Minimum Score
+          <input type="number" step="0.01" id="filter-score" value="0.35" />
+        </label>
+        <button id="apply-filter">Apply Filter</button>
+      </div>
+      <table id="jobs-table">
+        <thead>
+          <tr>
+            <th>Score</th>
+            <th>Title</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Summary</th>
+            <th>Tags</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <script>
+      const refreshSeconds = {{ refresh_seconds }};
+    </script>
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>

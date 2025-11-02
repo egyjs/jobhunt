@@ -1,0 +1,25 @@
+[
+  {
+    "external_id": "gd-201",
+    "title": "Senior Backend Developer (Laravel)",
+    "company": "Global Reach",
+    "location": "Dubai, UAE",
+    "description": "Design backend services supporting millions of users across the Gulf region.",
+    "requirements": "Laravel, API design, microservices, Azure, CI/CD pipelines.",
+    "salary": "AED 28k-32k/month",
+    "post_date": "2025-02-09T12:00:00",
+    "apply_link": "https://www.glassdoor.com/job-listing/gd-201"
+  },
+  {
+    "external_id": "gd-202",
+    "title": "Platform Engineer - PHP",
+    "company": "Skyline Labs",
+    "location": "Remote",
+    "description": "Enhance platform reliability and implement APIs using Laravel and AWS Lambda.",
+    "requirements": "Laravel, AWS, serverless, observability tooling, Terraform.",
+    "salary": "USD 90k-110k",
+    "post_date": "2025-02-14T14:45:00",
+    "apply_link": "https://www.glassdoor.com/job-listing/gd-202"
+  }
+]
+

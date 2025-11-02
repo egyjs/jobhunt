@@ -10,8 +10,9 @@ Keep this lean and update it when practices change.
 - **Formatting:** Follow PEP 8. Run `ruff format` and `ruff check` if the tool is
   installed; otherwise keep lines under 100 characters and imports grouped as
   stdlib → third-party → local.
-- **Async:** Use `asyncio`/`await` for any browser interactions. Avoid blocking
-  calls inside the event loop.
+- **Async:** Keep FastAPI endpoints and schedulers non-blocking. Avoid long-running
+  synchronous operations inside the event loop; offload heavy work to background
+  tasks if needed.
 - **Configuration:** Load environment variables through `dotenv` early and prefer
   `os.environ.get` with sensible defaults when adding new settings.
 - **Prompt strings:** Store long, multi-step prompts as triple-quoted strings and
@@ -21,12 +22,13 @@ Keep this lean and update it when practices change.
 
 ## Architecture Patterns
 
-- **Single orchestrator module:** `main.py` owns agent setup. Extract helper
-  modules only when logic becomes reusable across tasks.
-- **Tool extensions:** When adding custom `browser_use` tools, place them in a
-  dedicated module under `tools/` and document them in `ARCHITECTURE.md`.
-- **CSV/IO helpers:** Centralize file-writing helpers so repeated workflows share
-  consistent CSV schemas.
+- **API-first orchestration:** `main.py` should remain a thin wrapper around the
+  FastAPI app. Implement business logic in services/workflows to keep routes
+  declarative and testable.
+- **Job source adapters:** Implement new sources by adhering to the
+  `JobFetcher` protocol under `app/services/job_sources/`.
+- **Persistence:** Prefer SQLModel migrations via schema updates; document any
+  breaking changes in the architecture notes.
 
 ---
 
@@ -43,9 +45,10 @@ Keep this lean and update it when practices change.
 
 ## Testing Conventions
 
-- Run `python main.py` in a controlled environment to verify the workflow.
-- When feasible, capture mock responses or sample CSV output to compare against
-  expected schemas.
+- Run `python main.py` to start the API and ensure endpoints respond.
+- Use the sample data under `data/sample_jobs/` for deterministic manual tests.
+- Capture database snapshots or exported JSON when validating deduplication or
+  application workflow changes.
 - Document manual test steps in tickets or feature specs so runs are repeatable.
 
 ---

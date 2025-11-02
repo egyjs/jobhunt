@@ -55,11 +55,16 @@ htmlcov/
 .env.*.local
 
 # Project-specific data (local storage)
-data/
+data/*
 screenshots/
 *.csv
 *.json
 !.env.example
+# Allow checked-in sample fixtures for the MVP
+!data/
+!data/sample_jobs/
+!data/sample_jobs/*.json
+!data/user_profile.json
 
 # Logs
 *.log

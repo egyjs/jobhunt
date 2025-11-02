@@ -1,59 +1,84 @@
-# Job Hunt Agent - MVP
+# JobApply AI Agent MVP
 
-Automated job search agent using browser-use to scrape Indeed for Laravel developer positions.
+Autonomous job application agent that discovers, ranks, and prepares tailored applications for Laravel-focused roles.
+
+## Features
+
+- Multi-source job discovery across LinkedIn, Indeed, Glassdoor, and company career pages (backed by interchangeable
+  fetchers – static JSON data ships for the MVP).
+- Persistence using SQLite/SQLModel with deduplication across sources.
+- Matching engine leveraging TF-IDF similarity between the user's resume/profile and job descriptions.
+- Resume and cover letter tailoring that generates per-job artifacts saved under `output/`.
+- REST API endpoints (`/jobs/fetch`, `/jobs/match`, `/jobs/apply`) suitable for dashboard integration.
+- Background scheduler that refreshes job listings at a configurable cadence.
 
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
-- OpenAI API Key
+- (Optional) OpenAI API key if you plan to swap the heuristics for LLM-powered tailoring
 
 ### Installation
 
 ```bash
-# 1. Install dependencies
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Install Playwright browsers
-playwright install chromium
-
-# 3. Set up environment variables
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Copy the MVP environment template and adjust values
+cp mvp.env .env
 ```
 
-### Run
+Add your resume PDF to `data/resume.pdf` (or point `RESUME_PDF_PATH` to another location) and update
+`data/user_profile.json` with your current experience/skills.
+
+### Run the API server
 
 ```bash
 python main.py
 ```
 
-The agent will:
-1. Navigate to Indeed.com
-2. Search for "Laravel developer" jobs in "Egypt"
-3. Extract 5 job postings (title, company, location, summary)
-4. Save results to `job_postings.csv`
-5. Take screenshots of each job posting
+The FastAPI server starts on `http://localhost:8000` and boots a background scheduler that refreshes job postings on
+the configured interval.
 
-## Output
+### REST Workflows
 
-- **CSV File**: `job_postings.csv` with columns:
-  - Job Title
-  - Company Name
-  - Location
-  - Summary
-  - Screenshot Path
+Use any HTTP client (curl, HTTPie, Postman) to interact with the API:
+
+```bash
+# Fetch and store job listings from all sources
+curl -X POST http://localhost:8000/jobs/fetch
+
+# Retrieve ranked matches (top 25 by default)
+curl http://localhost:8000/jobs/match
+
+# Prepare an application package for job id 1
+curl -X POST http://localhost:8000/jobs/apply -H 'Content-Type: application/json' -d '{"job_id": 1, "auto_submit": false}'
+```
+
+Generated resumes and cover letters are written to `output/resumes/` and `output/cover_letters/` respectively. The
+database `jobhunt.db` keeps a record of postings and application states.
 
 ## Configuration
 
-Edit the `task` variable in `main.py` to customize:
-- Job search query
-- Location
-- Number of jobs to fetch
-- Output format
+Key environment variables (see `mvp.env` for a full list):
+
+- `JOB_TITLES`, `LOCATIONS`, `JOB_TYPES` – comma-separated search parameters.
+- `FETCH_LIMIT` – number of jobs per source per run.
+- `COMPANY_CAREER_PAGES` – optional URLs for direct career-site monitoring.
+- `SCHEDULER_INTERVAL_MINUTES` – background refresh interval.
+- `RESUME_PDF_PATH`, `PROFILE_JSON_PATH` – customize where resume/profile data is loaded from.
+
+## Roadmap
+
+- Replace static JSON feeds with live scrapers or API integrations per job board.
+- Integrate LLM-powered resume/cover-letter rewriting when API access is available.
+- Add a lightweight dashboard (Next.js) that consumes the REST API for monitoring and manual review.
+- Automate form submissions with Playwright/Puppeteer workflows for full end-to-end applications.
 
 ## Troubleshooting
 
-- **Browser not found**: Run `playwright install chromium`
-- **API errors**: Check your OPENAI_API_KEY in `.env`
-- **Rate limiting**: Add delays between requests in the task prompt
+- Ensure `jobhunt.db` is writable; remove the file if you need a clean slate.
+- Missing resume text? Confirm the PDF path in `.env` or provide a plaintext fallback.
+- When extending fetchers, update `.ai/ARCHITECTURE.md` and create specs under `.ai/features/` for new workflows.

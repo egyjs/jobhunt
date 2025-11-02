@@ -1,0 +1,25 @@
+[
+  {
+    "external_id": "ind-101",
+    "title": "Laravel Technical Lead",
+    "company": "Delta Soft",
+    "location": "Alexandria, Egypt",
+    "description": "Architect and deliver Laravel microservices for e-commerce clients. Manage sprint planning and code reviews.",
+    "requirements": "Laravel, REST APIs, Docker, team leadership, agile methodologies.",
+    "salary": "EGP 40k/month",
+    "post_date": "2025-02-11T07:00:00",
+    "apply_link": "https://www.indeed.com/viewjob?jk=ind-101"
+  },
+  {
+    "external_id": "ind-102",
+    "title": "Backend Engineer (PHP/Laravel)",
+    "company": "CloudBridge",
+    "location": "Remote",
+    "description": "Maintain mission-critical integrations and optimize Laravel queues for performance.",
+    "requirements": "Laravel, Redis, queue workers, unit testing, DevOps collaboration.",
+    "salary": "Competitive",
+    "post_date": "2025-02-13T10:00:00",
+    "apply_link": "https://www.indeed.com/viewjob?jk=ind-102"
+  }
+]
+

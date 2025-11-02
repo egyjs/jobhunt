@@ -7,16 +7,18 @@ echo "🚀 Setting up Job Hunt Agent MVP..."
 echo "📦 Installing Python packages..."
 pip install -r requirements.txt
 
-# Install Playwright browsers
-echo "🌐 Installing Playwright browsers..."
-playwright install chromium
+# Prepare directories for local storage
+echo "📁 Ensuring data and output directories exist..."
+mkdir -p data output/resumes output/cover_letters output/logs
 
-# Create data directory
-echo "📁 Creating data directory..."
-mkdir -p data
+if [ ! -f ".env" ]; then
+  echo "📄 Copying mvp.env to .env (edit as needed)"
+  cp mvp.env .env
+fi
 
 echo "✅ MVP setup complete!"
 echo ""
 echo "Next steps:"
-echo "1. Verify your .env has OPENAI_API_KEY set"
-echo "2. Run: python main.py"
+echo "1. Add your resume PDF to data/resume.pdf or update RESUME_PDF_PATH"
+echo "2. Review data/user_profile.json to ensure skills and experience are current"
+echo "3. Start the API with: python main.py"

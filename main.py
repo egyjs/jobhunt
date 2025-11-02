@@ -1,34 +1,33 @@
-from browser_use import Tools,Agent, ChatOpenAI, ActionResult, Browser
+"""Command-line entry point for running the JobApply AI Agent MVP."""
 
-from dotenv import load_dotenv
+from __future__ import annotations
+
 import asyncio
-tools = Tools()
+import logging
+from typing import Optional
+
+import uvicorn
+from dotenv import load_dotenv
+
+from app.api.main import app as fastapi_app
+
 
 load_dotenv()
 
 
+async def run_server(host: str = "0.0.0.0", port: int = 8000) -> None:
+    """Start the FastAPI server with uvicorn."""
 
-async def main():
-    llm = ChatOpenAI(model="gpt-4.1-mini")
-    # llm = ChatOllama(model="llama3.2:1b")
-    task = """
-    1. Go to https://indeed.com
-    2. find 5 relevant job postings for "Laravel developer" in "Egypt"
-    3. For each job posting, use extract action to get the job title, company name, location
-    4. Summarize the job description in one sentence
-    5. use screenshot action to screenshot the job posting page
-    6. use write_file action to store the extracted information in a CSV file named "job_postings.csv" with columns: Job Title, Company Name, Location, Summary, Screenshot Path
-
-    note: Use as few steps as possible, any executed code must be in javascript 
-    """
-    agent = Agent(
-        task=task,
-        llm=llm,
-    )
-    await agent.run()
+    config = uvicorn.Config(fastapi_app, host=host, port=port, log_level="info")
+    server = uvicorn.Server(config)
+    await server.serve()
 
 
+def main() -> None:
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(run_server())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+

@@ -1,21 +1,30 @@
 # Architecture Overview
 
-Automation agent that uses the `browser-use` toolkit to collect job listings.
-The repository intentionally keeps the surface area small so the runtime
-configuration stays easy to audit.
+Autonomous job-application MVP composed of a FastAPI backend, scheduled job fetch
+workflows, and AI-assisted document generators. The original single-file
+`browser-use` script has been refactored into modular services to support
+multi-source discovery, ranking, and application preparation.
 
 ---
 
 ## System Components
 
-- **Command-line entry (`main.py`):** Defines the natural-language task, configures
-  the `browser_use.Agent`, and executes the asynchronous run loop.
-- **Tools (`browser_use.Tools`):** Provides scraping, extraction, and file-writing
-  actions that the agent can call while browsing.
-- **Language model (`ChatOpenAI`):** Orchestrates reasoning over the browsing
-  session. The model name can be overridden via environment variables.
-- **Environment configuration:** `.env` file supplies credentials (e.g., OpenAI
-  key) that `browser-use` and `ChatOpenAI` read at startup.
+- **FastAPI application (`app/api/main.py`):** Exposes REST endpoints for fetching
+  jobs, computing matches, and preparing applications. Registers background
+  scheduler hooks during startup/shutdown.
+- **Scheduler (`app/scheduler.py`):** Periodically runs the fetch workflow based
+  on the configured interval to keep the job database fresh.
+- **Job source adapters (`app/services/job_sources/`):** Provide interchangeable
+  fetchers per platform. The MVP includes static JSON-backed providers, ready to
+  be swapped with live scrapers or APIs.
+- **Persistence layer (`app/database.py`, `app/models.py`):** SQLModel-based
+  ORM storing job postings, applications, and the user profile in SQLite.
+- **Matching & application services (`app/services/*.py`):** Handle TF-IDF
+  similarity scoring, resume/cover-letter tailoring, and summary generation.
+- **Workflows (`app/workflows/`):** High-level orchestration modules invoked by
+  API routes or the scheduler.
+- **Configuration (`app/config.py`):** Loads environment-driven settings,
+  ensuring output directories exist and centralizing search parameters.
 
 ---
 
@@ -26,30 +35,37 @@ Developer invokes `python main.py`
         ↓
 Environment variables load via `dotenv`
         ↓
-`Agent` receives the multi-step job-scraping task prompt
+FastAPI app boots and scheduler starts in the background
         ↓
-Agent drives a headless browser session using `browser-use` actions
+`/jobs/fetch` orchestrates all job source adapters (dedupe + persist)
         ↓
-Extracted data is saved to `job_postings.csv` through the provided file tool
+`/jobs/match` scores jobs against stored profile/resume
+        ↓
+`/jobs/apply` generates tailored artifacts and updates application status
+        ↓
+Artifacts and logs written to `output/`, state persisted in SQLite
 ```
 
 ---
 
 ## Key Decisions
 
-### Why `browser-use`?
-**Problem:** Need reliable, scriptable browsing for job-search automation.
-**Solution:** Adopted the `browser-use` toolkit because it exposes high-level
-agent abstractions and built-in extract/write actions.
-**Trade-off:** Requires alignment with the toolkit's async APIs and dependency
-on the provider's browser automation reliability.
+### Why FastAPI + SQLModel?
+**Problem:** The project needs an auditable API layer, persistence, and a clear
+extension path for automation beyond a single script.
+**Solution:** FastAPI offers lightweight REST routing while SQLModel keeps the
+ORM succinct. Both integrate cleanly with async workflows and are easy to test.
+**Trade-off:** Requires more project structure and dependencies compared to the
+original single-file script, but gains scalability and observability.
 
-### Why a single-module layout?
-**Problem:** Keep experimentation nimble while the workflow is evolving.
-**Solution:** Place orchestration logic in `main.py` and rely on rich prompt
-engineering rather than many helper modules.
-**Trade-off:** Fewer seams for unit tests today; expand into packages when we
-add persistent state or multiple tasks.
+### Why static JSON fetchers for the MVP?
+**Problem:** Demonstrate architecture without committing to brittle scraping in
+this iteration.
+**Solution:** Ship with deterministic JSON-backed fetchers that exercise the
+storage/matching/application pipelines. Real scrapers can implement the same
+protocols later.
+**Trade-off:** Out-of-the-box setup uses mock data; live integrations remain a
+follow-up task.
 
 ---
 
@@ -57,20 +73,29 @@ add persistent state or multiple tasks.
 
 ```text
 .
-├── main.py              # Entry point configuring and running the agent
-├── .ai/                 # Project documentation for humans and AI assistants
-└── .github/             # GitHub-specific guidance
+├── main.py                 # CLI entry booting FastAPI + scheduler
+├── app/
+│   ├── api/                # FastAPI app factory and routes
+│   ├── services/           # Domain services (matching, tailoring, fetchers)
+│   ├── workflows/          # Orchestrated workflows used by routes/scheduler
+│   ├── scheduler.py        # Background fetch scheduler
+│   ├── config.py           # Pydantic settings management
+│   ├── database.py         # SQLModel engine/session helpers
+│   └── models.py           # ORM models for jobs/applications/profile
+├── data/                   # Sample jobs and user profile JSON
+├── output/                 # Generated resumes, cover letters, logs
+└── .ai/                    # Project documentation for humans and AI assistants
 ```
 
 ---
 
 ## 🔧 For AI Agents
 
-1. Keep this file up to date when you split `main.py` into submodules or add
-   persistent storage/output layers.
-2. Note any new external integrations (APIs, message queues, etc.) here so
-   future contributors can trace dependencies quickly.
-3. Record the reasoning behind prompt or tool changes that materially affect
-   how the agent navigates.
+1. Update this file when adding new job source adapters or automation
+   capabilities (e.g., live scraping, auto-form submission).
+2. Document new background tasks, queues, or external integrations so future
+   contributors can reason about side effects easily.
+3. Maintain the workflow diagrams to reflect how API endpoints orchestrate
+   services.
 
 **Last Updated:** 2025-02-15

@@ -1,0 +1,25 @@
+[
+  {
+    "external_id": "li-001",
+    "title": "Senior Laravel Developer",
+    "company": "Tech Horizons",
+    "location": "Remote - Egypt",
+    "description": "Lead Laravel development for scalable SaaS platforms. Collaborate with cross-functional teams to deliver high-quality code and mentor junior engineers.",
+    "requirements": "8+ years of PHP experience, deep Laravel knowledge, MySQL, AWS, leadership skills.",
+    "salary": "$70k-$90k",
+    "post_date": "2025-02-10T08:00:00",
+    "apply_link": "https://www.linkedin.com/jobs/view/li-001"
+  },
+  {
+    "external_id": "li-002",
+    "title": "Full Stack PHP Engineer",
+    "company": "Nile Innovations",
+    "location": "Cairo, Egypt",
+    "description": "Build APIs and user interfaces using Laravel and Vue.js for fintech products.",
+    "requirements": "5+ years in PHP/Laravel, Vue.js, PostgreSQL, CI/CD pipelines.",
+    "salary": "$60k-$80k",
+    "post_date": "2025-02-12T09:30:00",
+    "apply_link": "https://www.linkedin.com/jobs/view/li-002"
+  }
+]
+
